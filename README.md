@@ -8,9 +8,10 @@ The following classes are currently on the roadmap for development:
 
 **Models**
 
-* _TwitterModel_. Wraps up all the services offered by Twitter.
-* _FacebookModel_. Wraps up all the services offered by Facebook.
-* _GooglePlusModel_. Wraps up all the services offered by Google+.
+* _TwitterModel_. Wraps services offered by Twitter.
+* _FacebookModel_. Wraps services offered by Facebook.
+* _GooglePlusModel_. Wraps services offered by Google+.
+* _InboxModel_. Wraps services offered by [Inbox](https://www.inboxapp.com/).
 
 **Views**
 
