@@ -6,9 +6,9 @@
  *
  * This view utilizes very basic template literals that are native to ECMAScript 6. This view is intended to be extended for use with other templating systems, for example `EJSView`, `MustacheView`, and `UnderscoreView` that are under development.
  */
-module library from '//code.google.com/p/embeddedjavascript/downloads/detail?name=ejs_production.js';
+module library from '//cdnjs.cloudflare.com/ajax/libs/mustache.js/0.8.1/mustache.min.js';
 
-export class EJSView extends View {
+export class MustacheView extends View {
 	/**
 	 * @param {Object} data This is data returned from the resolved promise in the render function
 	 * @returns {String} String containing the the HTML render buy the temaplte based on the data provided in the data parameter
@@ -26,16 +26,16 @@ export class EJSView extends View {
 	 * This function takre care of managing the rendering of the view. The bulk of the logic should be stored in the function if it is to be overriden for a 3rd party renderer. This allows the template object to be as simple as possible, so that it be overridden with just a simple template or path for real world view implementations.
 	 */
 	static render(request) {
-		console.log('EJSView.render()');
-
+		console.log('MustacheView.render()');
+		
 		let deferred = $.Deferred();
 
 		$.when(request).done(
 			(data, textStatus, jqXHR) => deferred.resolve(
-				new EJS({src: this.template}).render({data})
+				Mustache.render(this.data, {data})
 			)
 		);
-
+		
 		return deferred.promise();
 	}
 }
