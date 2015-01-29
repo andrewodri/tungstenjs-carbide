@@ -1,4 +1,71 @@
+import {Utility} from '../../../tungstenjs/src/utility';
+import {Model} from '../../../tungstenjs/src/model';
+
 export class LocalStorageModel extends Model {
+
+  static get memoryRegistry(){
+    if(!this.hasOwnProperty("__memoryRegistry__")){
+      this.__memoryRegistry__ = this.storageRegistry;
+    }
+
+    return this.__memoryRegistry__;
+  }
+
+  static set memoryRegistry(data){
+    if(data instanceof Array){
+      this.__memoryRegistry__ = data;
+    }else{
+      throw new Error('Cannot write to memoryRegistry because it is not an Array in class LocalStorageModel');
+    }
+  }
+
+  static get storageRegistry(){
+    let storageJson = window.localStorage.getItem("LocalStorageModel");
+
+    if(storageJson !== null){
+      let storageData = JSON.parse(storageJson);
+
+      if(storageData instanceof Array){
+        this.__storageRegistry__ = storageData;
+      }else{
+        throw new Error('Cannot read from storageRegistry because it is not an Array in class LocalStorageModel');
+      }
+    }else{
+      this.__storageRegistry__ = [];
+    }
+
+    return this.__storageRegistry__;
+  }
+
+  static set storageRegistry(data){
+    if(data instanceof Array){
+      window.localStorage.setItem("LocalStorageModel", JSON.stringify(data));
+
+      this.__storageRegistry__ = data;
+    }else{
+      throw new Error('Cannot write to storageRegistry because it is not an Array in class LocalStorageModel');
+    }
+  }
+
+  /**
+  * @todo Implement this function
+  * @static
+  * @param {Object} attributes Attributes that will be used to hydrate a new model instance. See `hydrate` for more information
+  * @returns {Model} Deferred instance of the newly created model
+  *
+  * Creates a new instance of the model, and performs a save operation.
+  */
+  static create(attributes){
+    console.log('LocalStorageModel.create()');
+
+    // Inspiration from Backbone.js; not sure if I like it, but lets see how it goes...
+    //let four = () => {return (((1+Math.random())*0x10000)|0).toString(16).substring(1);}
+    //attributes.guid = (four()+four()+"-"+four()+"-"+four()+"-"+four()+"-"+four()+four()+four());
+
+    //$(this).trigger('create');
+
+    return this.hydrate(attributes).save();
+  }
 
   /**
   * @todo Implement this function
@@ -12,7 +79,9 @@ export class LocalStorageModel extends Model {
     console.log('LocalStorageModel.destroy()');
 
     for(let item in items){
-      window.localStorage.removeItem("LocalStorageModel:" + item.key);
+      if(item instanceof LocalStorageModel){
+        // Remove item from array based on guid; throw error if no guid
+      }
     }
 
     return true;
@@ -27,10 +96,20 @@ export class LocalStorageModel extends Model {
   *
   * Create or update a model matching the attributes, and fill it with values.
   */
-  static updateOrCreate(properties){
+  static updateOrCreate(attributes, properties){
     console.log('LocalStorageModel.updateOrCreate()');
 
-    this.hydrate(properties).save();
+    let result = this.__find__(attributes, false, properties);
+
+    if(result instanceof Array && result.length == 1){
+      return result[0];
+    }else if (result instanceof Array && result.length > 1){
+      return result;
+    }else{
+      return this.create(
+        Object.assign({}, attributes, properties)
+      );
+    }
   }
 
   /**
@@ -49,20 +128,12 @@ export class LocalStorageModel extends Model {
       result = [];
 
       for(let item of data){
-        if(!item.hasOwnProperty("key") || item.key === ""){
-          throw new Error('Cannot hydrate model from an object without a "key" property in class LocalStorageModel');
-        }
-
         if(item instanceof Object){
-          result.push(new LocalStorageModel(item));
+          result.push(new this.classReference(item));
         }
       }
     }else if(data instanceof Object){
-      if(!data.hasOwnProperty("key") || data.key === ""){
-        throw new Error('Cannot hydrate model from an object without a "key" property in class LocalStorageModel');
-      }
-
-      result = new LocalStorageModel(data);
+      result = new this.classReference(data);
     }else{
       throw new Error('Cannot hydrate model from a non-object in class LocalStorageModel');
     }
@@ -79,19 +150,82 @@ export class LocalStorageModel extends Model {
   *
   * Internal function that finds and returns any available instances of the model.
   */
-  static __find__(key, isSingle = false, properties = {}) {
+  static __find__(attributes, isSingle = false, properties = {}) {
     console.log('LocalStorageModel.__find__()');
 
-    let data = window.localStorage.getItem("LocalStorageModel:" + key);
+    /*
+    // This is a bit of an anti-pattern right now, but will be cleaned up soon...
+    let filtered = this.memoryRegistry.filter((item) => {
+      if(Object.keys(attributes).length === 0){return true;}
 
-    if(data !== null){
-      return this.hydrate(
-        JSON.parse(
-          window.localStorage.getItem("LocalStorageModel:" + key)
-        )
-      );
+      for(let key in attributes){
+        let isMatch = (item[key] === attributes[key]);
+
+        if(isMatch){
+          Object.assign(item, properties);
+          return true;
+        }
+      }
+    });
+    */
+    this.memoryRegistry;
+
+    let filtered = []
+    if(Object.keys(attributes).length > 0){
+      this.__memoryRegistry__.forEach((currentValue, index, array) => {
+        let isMatch = true;
+
+        for(let key in attributes){
+          if(currentValue[key] !== attributes[key]){
+            isMatch = false;
+          }
+        }
+
+        if(isMatch){
+          array[index] = Object.assign(currentValue, properties);
+          filtered.push(currentValue);
+        }
+      });
     }else{
-      return data;
+      filtered = this.__memoryRegistry__;
+    }
+
+    if(properties.length > 0){
+      this.storageRegistry = this.__memoryRegistry__;
+    }
+
+    if(filtered !== null){
+      if(isSingle) {
+        return this.hydrate(filtered[0]);
+      }else{
+        return this.hydrate(filtered);
+      }
+    }else{
+      return null;
+    }
+  }
+
+  constructor(attributes) {
+    console.log('localStorageModel.constructor()');
+
+    Object.assign(this, attributes);
+
+    if(!this.hasOwnProperty("guid")){
+      this.guid = Utility.generateGuid();
+    }
+
+    this.classReference.memoryRegistry
+
+    let index = this.classReference.__memoryRegistry__.findIndex((item) => {
+      return (item.guid === this.guid);
+    });
+
+    this.classReference.memoryRegistry;
+
+    if(index < 0){
+      this.classReference.__memoryRegistry__.push(this);
+    }else{
+      this.classReference.__memoryRegistry__[index] = this;
     }
   }
 
@@ -104,7 +238,13 @@ export class LocalStorageModel extends Model {
   save() {
     console.log('localStorageModel.save()');
 
-    window.localStorage.setItem("LocalStorageModel:" + this.key, JSON.stringify(this));
+    let index = this.classReference.memoryRegistry.findIndex((item) => {
+        return (item.guid === this.guid);
+    });
+
+    this.classReference.storageRegistry = this.classReference.__memoryRegistry__;
+
+    // Overwrite object with matching guid in storage registry; get it first
 
     return this;
   }
