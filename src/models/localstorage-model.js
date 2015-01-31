@@ -1,6 +1,16 @@
 import {Utility} from '../../../tungstenjs/src/utility';
 import {Model} from '../../../tungstenjs/src/model';
 
+/**
+ * @class LocalStorageModel
+ * @author Andrew Odri andrew@affirmix.com
+ *
+ * This class is extends the base model class with functionality for interacting with browser storage.
+ *
+ * In order to track model instances before and after serialization, as well as before and after changea are committed, two registries have been added to the instance: The memory registry for uncomitted changes, and the stroage registry that reads and writes to and from browser storage.
+ *
+ * All the standard functions of a typical model have been implemented, such as `updateOrCreate`, `findOrFail`, `hydrate`, etc., to make dealing with local storage as simple as possible, and to easily migrate from other model implementations if needed.
+ */
 export class LocalStorageModel extends Model {
 
   static get memoryRegistry(){
@@ -48,13 +58,12 @@ export class LocalStorageModel extends Model {
   }
 
   /**
-  * @todo Implement this function
-  * @static
-  * @param {Object} attributes Attributes that will be used to hydrate a new model instance. See `hydrate` for more information
-  * @returns {Model} Deferred instance of the newly created model
-  *
-  * Creates a new instance of the model, and performs a save operation.
-  */
+   * @static
+   * @param {Object} attributes Attributes that will be used to hydrate a new model instance. See `hydrate` for more information
+   * @returns {Model} Deferred instance of the newly created model
+   *
+   * Creates a new instance of the model, and performs a save operation.
+   */
   static create(attributes){
     console.log('LocalStorageModel.create()');
 
@@ -68,13 +77,12 @@ export class LocalStorageModel extends Model {
   }
 
   /**
-  * @todo Implement this function
-  * @static
-  * @param {Array} items Model instances to be deleted
-  * @returns {Boolean} Boolean expressing whether the operation was successful
-  *
-  * Destroys the model instances provided, and performs a delete operation.
-  */
+   * @static
+   * @param {Array} items Model instances to be deleted
+   * @returns {Boolean} Boolean expressing whether the operation was successful
+   *
+   * Destroys the model instances provided, and performs a delete operation.
+   */
   static destroy(items){
     console.log('LocalStorageModel.destroy()');
 
@@ -88,14 +96,13 @@ export class LocalStorageModel extends Model {
   }
 
   /**
-  * @todo Implement this function
-  * @static
-  * @param {Object} attributes Attributes used to return the models that need to be updated
-  * @param {Object} properties Properties that model instances will be updated with
-  * @returns {Array} Deferred instance of the updated or created model(s)
-  *
-  * Create or update a model matching the attributes, and fill it with values.
-  */
+   * @static
+   * @param {Object} attributes Attributes used to return the models that need to be updated
+   * @param {Object} properties Properties that model instances will be updated with
+   * @returns {Array} Deferred instance of the updated or created model(s)
+   *
+   * Create or update a model matching the attributes, and fill it with values.
+   */
   static updateOrCreate(attributes, properties){
     console.log('LocalStorageModel.updateOrCreate()');
 
@@ -113,12 +120,12 @@ export class LocalStorageModel extends Model {
   }
 
   /**
-  * @static
-  * @param {Array|Object} data Data needed to instantiate new model instances
-  * @returns {Array|Model} Newly instantiated model/models
-  *
-  * Instantiates a model/models based on the data provided. This is called immediately after `filter`.
-  */
+   * @static
+   * @param {Array|Object} data Data needed to instantiate new model instances
+   * @returns {Array|Model} Newly instantiated model/models
+   *
+   * Instantiates a model/models based on the data provided. This is called immediately after `filter`.
+   */
   static hydrate(data) {
     console.log('LocalStorageModel.hydrate()');
 
@@ -142,34 +149,20 @@ export class LocalStorageModel extends Model {
   }
 
   /**
-  * @static
-  * @param {Object} attributes An object containing properties that correspond to the attributes in the templated RESTful URL, if not overriden by custom functionality
-  * @param {Boolean} isSingle An optional boolean that defines whether one or many models are returned. Defaults to false.
-  * @param {Object} properties An optional object containing properties that need to be be updated in the model(s) returned. Defaults to {}.
-  * @returns {Array|Model} Deferred instance of the Models that are found
-  *
-  * Internal function that finds and returns any available instances of the model.
-  */
+   * @static
+   * @param {Object} attributes An object containing properties that correspond to the attributes in the templated RESTful URL, if not overriden by custom functionality
+   * @param {Boolean} isSingle An optional boolean that defines whether one or many models are returned. Defaults to false.
+   * @param {Object} properties An optional object containing properties that need to be be updated in the model(s) returned. Defaults to {}.
+   * @returns {Array|Model} Deferred instance of the Models that are found
+   *
+   * Internal function that finds and returns any available instances of the model.
+   */
   static __find__(attributes, isSingle = false, properties = {}) {
     console.log('LocalStorageModel.__find__()');
 
-    /*
-    // This is a bit of an anti-pattern right now, but will be cleaned up soon...
-    let filtered = this.memoryRegistry.filter((item) => {
-      if(Object.keys(attributes).length === 0){return true;}
-
-      for(let key in attributes){
-        let isMatch = (item[key] === attributes[key]);
-
-        if(isMatch){
-          Object.assign(item, properties);
-          return true;
-        }
-      }
-    });
-    */
     this.memoryRegistry;
 
+    // This seems like the perfect task for Array.fliter(), however there is bigger fish to fry at this point...
     let filtered = []
     if(Object.keys(attributes).length > 0){
       this.__memoryRegistry__.forEach((currentValue, index, array) => {
@@ -205,6 +198,17 @@ export class LocalStorageModel extends Model {
     }
   }
 
+  /**
+   * @constructor
+   * @param {Object} attributes This provides properties and objects that are to be merged with the model instance.
+   * @returns {Model} Instance of the saved model
+   *
+   * Constructs the model instance by merging the attributes with the new model instance.
+   *
+   * It then generates a GUID if one is not already present, as this is essential for identifing local storage model instances before and after serialization.
+   *
+   * The memoryRegistry is then populated by ensuring that the getter is called, and the newly created instance either overwrites it's match in memoryRegistry, or is pushed onto the memoryRegistry array.
+   */
   constructor(attributes) {
     console.log('localStorageModel.constructor()');
 
@@ -230,11 +234,10 @@ export class LocalStorageModel extends Model {
   }
 
   /**
-  * @todo Implement this function
-  * @returns {Model} Instance of the saved model
-  *
-  * Performs a save operation.
-  */
+   * @returns {Model} Instance of the saved model
+   *
+   * Performs a save operation.
+   */
   save() {
     console.log('localStorageModel.save()');
 
