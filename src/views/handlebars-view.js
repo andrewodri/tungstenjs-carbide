@@ -6,17 +6,20 @@
  *
  * This view utilizes very basic template literals that are native to ECMAScript 6. This view is intended to be extended for use with other templating systems, for example `EJSView`, `MustacheView`, and `UnderscoreView` that are under development.
  */
-module library from '//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.min.js';
+import {View} from '../../../tungstenjs/src/view';
+
+//import Handlebars from '../bower_components/handlebars/handlebars.runtime';
 
 export class HandlebarsView extends View {
 	/**
-	 * @param {Object} data This is data returned from the resolved promise in the render function
 	 * @returns {String} String containing the the HTML render buy the temaplte based on the data provided in the data parameter
 	 *
 	 * This function is called by the render function, providing with the data that is returned from the resolved promise object. While the template is currently implemented as an ECMAScript 6 template literal, it could also just return a path if the render function has been implemented with a 3rd party renderer.
 	 */
-	static get data() {
-		return '';
+	static get template() {
+		console.log('HandlebarsView.template()');
+
+		return ``;
 	}
 
 	/**
@@ -28,11 +31,15 @@ export class HandlebarsView extends View {
 	static render(request) {
 		console.log('HandlebarsView.render()');
 
+		if(!Reflect.has(this, 'compiledTemplate')){
+			this.compiledTemplate = Handlebars.compile(this.template);
+		}
+
 		let deferred = $.Deferred();
 
 		$.when(request).done(
 			(data, textStatus, jqXHR) => deferred.resolve(
-				Handlebars.compile(this.data).template(data)
+				this.compiledTemplate(data)
 			)
 		);
 
