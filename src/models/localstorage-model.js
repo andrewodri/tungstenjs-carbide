@@ -190,7 +190,7 @@ export class LocalStorageModel extends Model {
       filtered = this.__memoryRegistry__;
     }
 
-    if(properties.length > 0){
+    if(Object.keys(properties).length > 0){
       this.storageRegistry = this.__memoryRegistry__;
     }
 
