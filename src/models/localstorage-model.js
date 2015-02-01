@@ -67,12 +67,6 @@ export class LocalStorageModel extends Model {
   static create(attributes){
     console.log('LocalStorageModel.create()');
 
-    // Inspiration from Backbone.js; not sure if I like it, but lets see how it goes...
-    //let four = () => {return (((1+Math.random())*0x10000)|0).toString(16).substring(1);}
-    //attributes.guid = (four()+four()+"-"+four()+"-"+four()+"-"+four()+"-"+four()+four()+four());
-
-    //$(this).trigger('create');
-
     return this.hydrate(attributes).save();
   }
 
@@ -87,8 +81,8 @@ export class LocalStorageModel extends Model {
     console.log('LocalStorageModel.destroy()');
 
     for(let item in items){
-      if(item instanceof LocalStorageModel){
-        // Remove item from array based on guid; throw error if no guid
+      if(item instanceof this.classReference){
+        item.delete();
       }
     }
 
@@ -242,12 +236,31 @@ export class LocalStorageModel extends Model {
     console.log('localStorageModel.save()');
 
     let index = this.classReference.memoryRegistry.findIndex((item) => {
-        return (item.guid === this.guid);
+      return (item.guid === this.guid);
     });
 
     this.classReference.storageRegistry = this.classReference.__memoryRegistry__;
 
     // Overwrite object with matching guid in storage registry; get it first
+
+    return this;
+  }
+
+  /**
+   * @returns {Model} Instance of the model to be deleted
+   *
+   * Performs a delete operation.
+   */
+  delete() {
+    console.log('localStorageModel.save()');
+
+    let index = this.classReference.memoryRegistry.findIndex((item) => {
+      return (item.guid === this.guid);
+    });
+
+    this.classReference.__memoryRegistry__.splice(index, 1);
+
+    this.classReference.storageRegistry = this.classReference.__memoryRegistry__;
 
     return this;
   }
